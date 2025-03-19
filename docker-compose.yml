@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  redis-master:
+    build: .
+    container_name: redis-master
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: redis-server /usr/local/etc/redis/redis.conf --appendonly yes
+    networks:
+      - redis-net
+
+  redis-slave1:
+    image: redis:latest
+    container_name: redis-slave1
+    restart: always
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: redis-server --slaveof redis-master 6379 --requirepass ${REDIS_PASSWORD} --appendonly yes
+    depends_on:
+      - redis-master
+    networks:
+      - redis-net
+
+  redis-slave2:
+    image: redis:latest
+    container_name: redis-slave2
+    restart: always
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    command: redis-server --slaveof redis-master 6379 --requirepass ${REDIS_PASSWORD} --appendonly yes
+    depends_on:
+      - redis-master
+    networks:
+      - redis-net
+
+  redis-sentinel1:
+    image: redis:latest
+    container_name: redis-sentinel1
+    restart: always
+    command: redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+    depends_on:
+      - redis-master
+    networks:
+      - redis-net
+
+  redis-sentinel2:
+    image: redis:latest
+    container_name: redis-sentinel2
+    restart: always
+    command: redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+    depends_on:
+      - redis-master
+    networks:
+      - redis-net
+
+  redis-sentinel3:
+    image: redis:latest
+    container_name: redis-sentinel3
+    restart: always
+    command: redis-sentinel /etc/redis/sentinel.conf
+    volumes:
+      - ./sentinel.conf:/etc/redis/sentinel.conf
+    depends_on:
+      - redis-master
+    networks:
+      - redis-net
+
+networks:
+  redis-net:
+    driver: bridge
